@@ -3,8 +3,10 @@
 
 #include <iostream>
 #include <cstdint>
+#include <vector>
 
-#include "mpu.h"
+class Mpu;
+class OpCode_Intf;
 
 #define CPU_NB_OPCODES_8_BITS   51
 #define CPU_NB_OPCODES_16_BITS  8
@@ -58,7 +60,6 @@ struct ts_opcodesDesc
     std::uint8_t 	id16bitsLSW[CPU_NB_OPCODES_16_BITS];
     std::string		instr16bits[CPU_NB_OPCODES_16_BITS];
 };
-
 
 class Cpu
 {
@@ -150,33 +151,33 @@ public:
     void initRegisters();
 
     // Exécution d'un opcode
-    void 				executeOpcode(std::uint16_t ai_opcodeIdx);
+    void 				executeOpcode(std::uint16_t ai_memOffset);
 
-    std::string			showInstruction(std::uint16_t ai_idx) const;
+    std::string			showInstruction(std::uint16_t ai_memOffset) const;
 
-    std::uint8_t		showInstructionId(std::uint16_t ai_idx) const;
-    std::string			showInstructionIdStr(std::uint16_t ai_idx) const;
+    std::uint8_t		showInstructionId(std::uint16_t ai_memOffset) const;
 
 private:
     // Initialisation des masques et identifiants des opcodes
     void initOpcodesDesc();
 
     // Décodage d'un opcode
-    std::uint8_t 		decodeOpcode(std::uint8_t ai_opcode) const;
+    OpCode_Intf*        decodeOpcode(uint8_t ai_opcode);
+    OpCode_Intf const *        decodeOpcode(uint8_t ai_opcode) const;
 
-    std::string			decodeInstr(std::uint16_t ai_idx, bool ai_exec);
+    std::string			decodeInstr(std::uint16_t ai_memOffset, bool ai_exec);
 
     //const version de decodeInstr qui ne lance pas l'exécution
-    std::string         decodeInstr(std::uint16_t ai_idx, bool ai_exec = false) const;
+    std::string         decodeInstr(std::uint16_t ai_memOffset, bool ai_exec = false) const;
 
     // LISTE DES INSTRUCTIONS GEREES
     // *****************************
     std::string			__decodeNop(bool ai_exec);
-    std::string			__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_exec);
-    std::string			__decodeLoad16bits(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_exec);
-    std::string			__decodeJump(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_exec);
-    std::string         __decodeInc(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_exec);
-    std::string         __decodeDec(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_exec);
+    std::string			__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_memOffset, bool ai_exec);
+    std::string			__decodeLoad16bits(std::uint8_t ai_id, std::uint16_t ai_memOffset, bool ai_exec);
+    std::string			__decodeJump(std::uint8_t ai_id, std::uint16_t ai_memOffset, bool ai_exec);
+    std::string         __decodeInc(std::uint8_t ai_id, std::uint16_t ai_memOffset, bool ai_exec);
+    std::string         __decodeDec(std::uint8_t ai_id, std::uint16_t ai_memOffset, bool ai_exec);
 
     // Récupération d'un registre 8/16 bits en fonction de son masque
     // 0 1 2 3 4 5    6 7
@@ -197,6 +198,8 @@ private:
     ts_opcodesDesc    m_opcodesDesc;              // Masque et identifiant des opcodes
 
     Mpu*            mp_mpu;                     // Pointeur vers la mémoire
+
+    std::vector<OpCode_Intf*>   mp_opcodes;         // vecteur de pointeurs vers les classes opCode
 
 };
 

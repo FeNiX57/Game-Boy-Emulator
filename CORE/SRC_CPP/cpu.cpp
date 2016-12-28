@@ -1,6 +1,10 @@
 #include <string>
 #include "CORE/INCLUDE/cpu.h"
 
+#include "CORE/INCLUDE/mpu.h"
+#include "CORE/INCLUDE/OPCODE/opcode_intf.h"
+#include "CORE/INCLUDE/OPCODE/opcode_nop.h"
+
 
 // ********************************************************
 // Constructeur / Destructeur
@@ -267,8 +271,8 @@ void Cpu::initRegisters()
 
 void Cpu::initOpcodesDesc()
 {
+    mp_opcodes.push_back(new OpCode_Nop(*this, *mp_mpu));
     // Initialisation des masques et identifiants des opcodes 8 bits
-    m_opcodesDesc.masque8bits[0]  = 0xFF; m_opcodesDesc.id8bits[0]  = 0x00; m_opcodesDesc.instr8bits[0] = "NOP";	// NOP
     m_opcodesDesc.masque8bits[1]  = 0xFF; m_opcodesDesc.id8bits[1]  = 0x08; m_opcodesDesc.instr8bits[1] = "LN";    	// LN (N),SP
     m_opcodesDesc.masque8bits[2]  = 0xCF; m_opcodesDesc.id8bits[2]  = 0x01; m_opcodesDesc.instr8bits[2] = "LD";     // LD R,N
     m_opcodesDesc.masque8bits[3]  = 0xCF; m_opcodesDesc.id8bits[3]  = 0x09; m_opcodesDesc.instr8bits[3] = "ADD";    // ADD HL,R
@@ -336,65 +340,67 @@ void Cpu::initOpcodesDesc()
 // DECODAGE D'UN OPCODE
 // ********************************************************
 
-std::uint8_t Cpu::decodeOpcode(std::uint8_t ai_opcode) const
+OpCode_Intf *Cpu::decodeOpcode(uint8_t ai_opcode)
 {
-    std::uint16_t w_id;
-
-    for(std::uint16_t w_i = 0; w_i < CPU_NB_OPCODES_8_BITS; w_i++)
-    {
-        // Recherche de l'ID correspondant à l'opcode
-        w_id = (m_opcodesDesc.masque8bits[w_i] & ai_opcode);
-
-        if(w_id == m_opcodesDesc.id8bits[w_i])
-        {
-           break;
+    for (std::vector<OpCode_Intf*>::iterator w_it = mp_opcodes.begin(); w_it != mp_opcodes.end(); ++w_it) {
+        if (*(*w_it) == ai_opcode) {
+            return *w_it;
         }
     }
-
-    return w_id;
+    std::cerr << "Unknow OpCode: " << +ai_opcode << std::endl;
+    return nullptr;
 }
 
-
-std::string			Cpu::showInstruction(std::uint16_t ai_idx) const
+const OpCode_Intf *Cpu::decodeOpcode(uint8_t ai_opcode) const
 {
-    return decodeInstr(ai_idx);
-}
-
-std::uint8_t		Cpu::showInstructionId(std::uint16_t ai_idx) const
-{
-    std::uint8_t 	w_id = decodeOpcode(mp_mpu->getMemVal(ai_idx));
-
-    return w_id;
-}
-
-std::string			Cpu::showInstructionIdStr(std::uint16_t ai_idx) const
-{
-    std::string		w_str = "";
-
-    std::uint8_t 	w_id = decodeOpcode(mp_mpu->getMemVal(ai_idx));
-
-    for(std::uint16_t w_i = 0; w_i < CPU_NB_OPCODES_8_BITS; w_i++)
-    {
-        if (w_id == m_opcodesDesc.id8bits[w_i])
-        {
-            w_str = m_opcodesDesc.instr8bits[w_i];
-            break;
+    for (std::vector<OpCode_Intf*>::const_iterator w_cit = mp_opcodes.cbegin(); w_cit != mp_opcodes.cend(); ++w_cit) {
+        if (*(*w_cit) == ai_opcode) {
+            return *w_cit;
         }
     }
+    std::cerr << "Unknow OpCode: " << +ai_opcode << std::endl;
+    return nullptr;
+}
 
-    return w_str;
+
+std::string			Cpu::showInstruction(std::uint16_t ai_memOffset) const
+{
+    OpCode_Intf const * wp_opecode = decodeOpcode(mp_mpu->getMemVal(ai_memOffset));
+    if (wp_opecode != nullptr) {
+        return wp_opecode->getInstruction(ai_memOffset);
+    }
+    else {
+        return std::string("Error: Unknown OpCode");
+    }
+}
+
+std::uint8_t		Cpu::showInstructionId(std::uint16_t ai_memOffset) const
+{
+    OpCode_Intf const * wp_opecode = decodeOpcode(mp_mpu->getMemVal(ai_memOffset));
+    if (wp_opecode != nullptr) {
+        return wp_opecode->getId();
+    }
+    else {
+        return 0;
+    }
 }
 
 // ********************************************************
 // EXECUTION D'UN OPCODE
 // ********************************************************
 
-void Cpu::executeOpcode(std::uint16_t ai_opcodeIdx)
+void Cpu::executeOpcode(std::uint16_t ai_memOffset)
 {
-    decodeInstr(ai_opcodeIdx, true);
+    OpCode_Intf* wp_opecode = decodeOpcode(mp_mpu->getMemVal(ai_memOffset));
+    if (wp_opecode != nullptr) {
+        wp_opecode->execute(ai_memOffset);
+    }
+    else {
+        m_pc++;
+    }
 }
 
-std::string         Cpu::decodeInstr(std::uint16_t ai_idx, bool ai_exec) const {
+std::string         Cpu::decodeInstr(std::uint16_t ai_memOffset, bool ai_exec) const {
     if (ai_exec == true) {
         throw std::logic_error("const version of decodeInstr must have ai_exec argument to false");
     }
@@ -402,15 +408,15 @@ std::string         Cpu::decodeInstr(std::uint16_t ai_idx, bool ai_exec) const {
     // Appel à la fonction non const decodeInstr qui avec le second paramètre false
     // ne modifie aucune donnée interne à la classe, ce qui permet de rester en dehors
     // des cas à comportement indéterminé.
-    return const_cast<Cpu*>(this)->decodeInstr(ai_idx, false);
+    return const_cast<Cpu*>(this)->decodeInstr(ai_memOffset, false);
 }
 
-std::string			Cpu::decodeInstr(std::uint16_t ai_idx, bool ai_exec)
+std::string			Cpu::decodeInstr(std::uint16_t ai_memOffset, bool ai_exec)
 {
     std::string		w_str = "";
-
+    /*
     // On récupère l'ID de l'opcode à executer
-    std::uint8_t 	w_id = decodeOpcode(mp_mpu->getMemVal(ai_idx));
+    std::uint8_t 	w_id = decodeOpcode(mp_mpu->getMemVal(ai_memOffset));
 
     // On exécute l'opcode correspondant
     switch(w_id)
@@ -433,30 +439,30 @@ std::string			Cpu::decodeInstr(std::uint16_t ai_idx, bool ai_exec)
         case 0xF2:  // LD A,(C)
         case 0xEA:  // LD (N),A
         case 0xFA:  // LD A,(N)
-            w_str = __decodeLoad8bits(w_id, ai_idx, ai_exec);
+            w_str = __decodeLoad8bits(w_id, ai_memOffset, ai_exec);
             break;
 
         case 0x08:  // LD (N),SP
         case 0x01:  // LD R,N
         case 0xF8:  // LD HL,SP+N
         case 0xF9:  // LD SP,HL
-            w_str = __decodeLoad16bits(w_id, ai_idx, ai_exec);
+            w_str = __decodeLoad16bits(w_id, ai_memOffset, ai_exec);
             break;
 
         case 0xC2:  // JP F,N
         case 0xC3:  // JP N
         case 0xE9:  // JP HL
-            w_str = __decodeJump(w_id, ai_idx, ai_exec);
+            w_str = __decodeJump(w_id, ai_memOffset, ai_exec);
             break;
 
         case 0x03:  // INC R
         case 0x04:  // INC D
-            w_str = __decodeInc(w_id, ai_idx, ai_exec);
+            w_str = __decodeInc(w_id, ai_memOffset, ai_exec);
             break;
 
         case 0x0B:  // DEC R
         case 0x05:  // DEC D
-            w_str = __decodeDec(w_id, ai_idx, ai_exec);
+            w_str = __decodeDec(w_id, ai_memOffset, ai_exec);
             break;
 
         default:
@@ -466,7 +472,7 @@ std::string			Cpu::decodeInstr(std::uint16_t ai_idx, bool ai_exec)
             }
             break;
     }
-
+    */
     return w_str;
 }
 
@@ -484,7 +490,7 @@ std::string			Cpu::__decodeNop(bool ai_exec)
     return w_str;
 }
 
-std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_exec)
+std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_memOffset, bool ai_exec)
 {
     // Variable locale
     std::string		w_str;
@@ -522,10 +528,10 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, b
     if (w_id == 0x06)    // LD D,N
     {
         // Récupération du registre
-        w_register = ( mp_mpu->getMemVal(ai_idx) & 0x38 ) >> 3;
+        w_register = ( mp_mpu->getMemVal(ai_memOffset) & 0x38 ) >> 3;
 
         // Récupération de la valeur à charger dans le registre
-        w_data8bits = mp_mpu->getMemVal(ai_idx + 1);
+        w_data8bits = mp_mpu->getMemVal(ai_memOffset + 1);
 
         // Chargement de la valeur dans le registre
         _decodeRegister8Bits(w_register, w_sReg, wp_register8bits, wp_register16bits);
@@ -535,7 +541,7 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, b
     else if (w_id == 0x02)   // LD (R),A
     {
         // Récupération du registre
-        w_register = mp_mpu->getMemVal(ai_idx) >> 4;
+        w_register = mp_mpu->getMemVal(ai_memOffset) >> 4;
 
         wp_register16bits = _decodeRegister16Bits(w_register, w_id, w_sReg);
 
@@ -544,7 +550,7 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, b
     else if (w_id == 0x0A)   // LD A,(R)
     {
         // Récupération du registre
-        w_register = mp_mpu->getMemVal(ai_idx) >> 4;
+        w_register = mp_mpu->getMemVal(ai_memOffset) >> 4;
 
         wp_register16bits = _decodeRegister16Bits(w_register, w_id, w_sReg);
 
@@ -577,11 +583,11 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, b
     else if (w_id == 0x40)  // LD D,D
     {
         // Récupération du premier registre
-        w_register = ( mp_mpu->getMemVal(ai_idx) >> 3 ) & 0x07;
+        w_register = ( mp_mpu->getMemVal(ai_memOffset) >> 3 ) & 0x07;
         _decodeRegister8Bits(w_register, w_sReg, wp_register8bits, wp_register16bits);
 
         // Récupération du deuxième registre
-        w_register = mp_mpu->getMemVal(ai_idx) & 0x07;
+        w_register = mp_mpu->getMemVal(ai_memOffset) & 0x07;
         _decodeRegister8Bits(w_register, w_sReg2, wp_register8bits2, wp_register16bits2);
 
         w_str = "LOAD " + w_sReg +"," + w_sReg2;
@@ -589,7 +595,7 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, b
     else if (w_id == 0xE0)   // LD (FF00+N),A
     {
         // Récupération de l'offset N
-        w_data8bits = mp_mpu->getMemVal(ai_idx + 1);
+        w_data8bits = mp_mpu->getMemVal(ai_memOffset + 1);
 
         // Registre 8 bits à utiliser
         wp_register8bits = &m_registers.s8bits.a;
@@ -599,7 +605,7 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, b
     else if (w_id == 0xF0)  // LD A,(FF00+N)
     {
         // Récupération de l'offset N
-        w_data8bits = mp_mpu->getMemVal(ai_idx + 1);
+        w_data8bits = mp_mpu->getMemVal(ai_memOffset + 1);
 
         // Registre 8 bits à utiliser
         wp_register8bits = &m_registers.s8bits.a;
@@ -609,7 +615,7 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, b
     else if (w_id == 0xEA)  // LD (N),A
     {
         // Récupération de l'adresse d'écriture
-        w_data16bits = (mp_mpu->getMemVal(ai_idx + 2) * 0x100) + mp_mpu->getMemVal(ai_idx + 1);
+        w_data16bits = (mp_mpu->getMemVal(ai_memOffset + 2) * 0x100) + mp_mpu->getMemVal(ai_memOffset + 1);
 
         // Registre 8 bits à utiliser
         wp_register8bits = &m_registers.s8bits.a;
@@ -619,7 +625,7 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, b
     else if (w_id == 0xFA)  // LD A,(N)
     {
         // Récupération de l'adresse de lecture
-        w_data16bits = (mp_mpu->getMemVal(ai_idx + 2) * 0x100) + mp_mpu->getMemVal(ai_idx + 1);
+        w_data16bits = (mp_mpu->getMemVal(ai_memOffset + 2) * 0x100) + mp_mpu->getMemVal(ai_memOffset + 1);
 
         // Registre 8 bits à utiliser
         wp_register8bits = &m_registers.s8bits.a;
@@ -771,7 +777,7 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_idx, b
     return w_str;
 }
 
-std::string Cpu::__decodeLoad16bits(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_exec)
+std::string Cpu::__decodeLoad16bits(std::uint8_t ai_id, std::uint16_t ai_memOffset, bool ai_exec)
 {
     // Variable locale
     std::string		w_str;
@@ -790,7 +796,7 @@ std::string Cpu::__decodeLoad16bits(std::uint8_t ai_id, std::uint16_t ai_idx, bo
     if (w_id == 0x08)
     {
         // Récupération de la valeur à charger dans le registre
-        w_data16bits = (mp_mpu->getMemVal(ai_idx + 2) * 0x100) + mp_mpu->getMemVal(ai_idx + 1);
+        w_data16bits = (mp_mpu->getMemVal(ai_memOffset + 2) * 0x100) + mp_mpu->getMemVal(ai_memOffset + 1);
 
         wp_register16bits = &m_sp;
         w_str += "(" + std::to_string(w_data16bits) + "),SP";
@@ -798,7 +804,7 @@ std::string Cpu::__decodeLoad16bits(std::uint8_t ai_id, std::uint16_t ai_idx, bo
     else if (w_id == 0xF8)
     {
         // Récupération de la valeur 8 bits signés
-        w_data8bits = (mp_mpu->getMemVal(ai_idx + 1));
+        w_data8bits = (mp_mpu->getMemVal(ai_memOffset + 1));
 
         w_str += "HL,SP+" + std::to_string(w_data8bits);
     }
@@ -809,10 +815,10 @@ std::string Cpu::__decodeLoad16bits(std::uint8_t ai_id, std::uint16_t ai_idx, bo
     else
     {
         // Récupération de la valeur à charger dans le registre
-        w_data16bits = (mp_mpu->getMemVal(ai_idx + 2) * 0x100) + mp_mpu->getMemVal(ai_idx + 1);
+        w_data16bits = (mp_mpu->getMemVal(ai_memOffset + 2) * 0x100) + mp_mpu->getMemVal(ai_memOffset + 1);
 
         // On récupère l'indice du registre à utiliser
-        w_register = ( mp_mpu->getMemVal(ai_idx) & 0x30 ) >> 4;
+        w_register = ( mp_mpu->getMemVal(ai_memOffset) & 0x30 ) >> 4;
 
         wp_register16bits = _decodeRegister16Bits(w_register, w_id, w_str);
     }
@@ -885,7 +891,7 @@ std::string Cpu::__decodeLoad16bits(std::uint8_t ai_id, std::uint16_t ai_idx, bo
     return w_str;
 }
 
-std::string	Cpu::__decodeJump(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_exec)
+std::string	Cpu::__decodeJump(std::uint8_t ai_id, std::uint16_t ai_memOffset, bool ai_exec)
 {
     std::string		w_str = "JP ";
     std::uint16_t	w_pos = 0;
@@ -895,7 +901,7 @@ std::string	Cpu::__decodeJump(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_
 
     // DECODAGE DE LA COMMANDE JUMP
     // ****************************
-    w_mnemo = (mp_mpu->getMemVal(ai_idx) & 0x18) >> 3;
+    w_mnemo = (mp_mpu->getMemVal(ai_memOffset) & 0x18) >> 3;
 
     switch(ai_id)
     {
@@ -905,7 +911,7 @@ std::string	Cpu::__decodeJump(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_
         w_size = 1;
         break;
     case 0xC2:  // JP F,N
-        w_pos = (mp_mpu->getMemVal(ai_idx + 2) * 0x100) + mp_mpu->getMemVal(ai_idx + 1);
+        w_pos = (mp_mpu->getMemVal(ai_memOffset + 2) * 0x100) + mp_mpu->getMemVal(ai_memOffset + 1);
         switch (w_mnemo)
         {
         case 0:
@@ -929,7 +935,7 @@ std::string	Cpu::__decodeJump(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_
         w_size = 3;
         break;
     case 0xC3:  // JP N
-        w_pos = (mp_mpu->getMemVal(ai_idx + 2) * 0x100) + mp_mpu->getMemVal(ai_idx + 1);
+        w_pos = (mp_mpu->getMemVal(ai_memOffset + 2) * 0x100) + mp_mpu->getMemVal(ai_memOffset + 1);
         w_str += std::to_string(w_pos);
         w_size = 3;
         break;
@@ -952,7 +958,7 @@ std::string	Cpu::__decodeJump(std::uint8_t ai_id, std::uint16_t ai_idx, bool ai_
     return w_str;
 }
 
-std::string Cpu::__decodeInc(uint8_t ai_id, uint16_t ai_idx, bool ai_exec) {
+std::string Cpu::__decodeInc(uint8_t ai_id, uint16_t ai_memOffset, bool ai_exec) {
     std::string w_str            = "INC ";
     uint8_t w_register           = 0u;
     uint16_t * wp_register16bits = NULL;
@@ -962,12 +968,12 @@ std::string Cpu::__decodeInc(uint8_t ai_id, uint16_t ai_idx, bool ai_exec) {
     switch (ai_id) {
         case 0x03: // INC R sur registre 16b
             // Récupération du registre
-            w_register = (mp_mpu->getMemVal(ai_idx) >> 4);
+            w_register = (mp_mpu->getMemVal(ai_memOffset) >> 4);
             wp_register16bits = _decodeRegister16Bits(w_register, ai_id, w_str);
 
         case 0x4: // INC D
             // Récupération du registre
-            w_register = ((mp_mpu->getMemVal(ai_idx) & 0x38) >> 3);
+            w_register = ((mp_mpu->getMemVal(ai_memOffset) & 0x38) >> 3);
             _decodeRegister8Bits(w_register, w_str, wp_register8bits, wp_register16bits);
 
             break;
@@ -1034,7 +1040,7 @@ std::string Cpu::__decodeInc(uint8_t ai_id, uint16_t ai_idx, bool ai_exec) {
     return w_str;
 }
 
-std::string Cpu::__decodeDec(uint8_t ai_id, uint16_t ai_idx, bool ai_exec) {
+std::string Cpu::__decodeDec(uint8_t ai_id, uint16_t ai_memOffset, bool ai_exec) {
     std::string w_str            = "DEC ";
     uint8_t w_register           = 0u;
     uint16_t * wp_register16bits = NULL;
@@ -1044,12 +1050,12 @@ std::string Cpu::__decodeDec(uint8_t ai_id, uint16_t ai_idx, bool ai_exec) {
     switch (ai_id) {
         case 0x0B: // DEC R sur registre 16b
             // Récupération du registre
-            w_register = (mp_mpu->getMemVal(ai_idx) >> 4);
+            w_register = (mp_mpu->getMemVal(ai_memOffset) >> 4);
             wp_register16bits = _decodeRegister16Bits(w_register, ai_id, w_str);
 
         case 0x5: // DEC D
             // Récupération du registre
-            w_register = ((mp_mpu->getMemVal(ai_idx) & 0x38) >> 3);
+            w_register = ((mp_mpu->getMemVal(ai_memOffset) & 0x38) >> 3);
             _decodeRegister8Bits(w_register, w_str, wp_register8bits, wp_register16bits);
 
             break;
