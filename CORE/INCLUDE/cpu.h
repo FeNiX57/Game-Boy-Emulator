@@ -64,65 +64,84 @@ class Cpu
 {
 
 public:
-    explicit Cpu(Mpu* ai_mpu);
+    explicit Cpu(Mpu* aip_mpu);
     ~Cpu();
 
     // Accesseur registre A
     std::uint8_t getRegisterA() const;
+    void setRegisterA(uint8_t ai_value);
 
     // Accesseur registre B
     std::uint8_t getRegisterB() const;
+    void setRegisterB(uint8_t ai_value);
 
     // Accesseur registre C
     std::uint8_t getRegisterC() const;
+    void setRegisterC(uint8_t ai_value);
 
     // Accesseur registre D
     std::uint8_t getRegisterD() const;
+    void setRegisterD(uint8_t ai_value);
 
     // Accesseur registre E
     std::uint8_t getRegisterE() const;
+    void setRegisterE(uint8_t ai_value);
 
     // Accesseur registre F
     std::uint8_t getRegisterF() const;
+    void setRegisterF(uint8_t ai_value);
 
     // Accesseur registre H
     std::uint8_t getRegisterH() const;
+    void setRegisterH(uint8_t ai_value);
 
     // Accesseur registre L
     std::uint8_t getRegisterL() const;
+    void setRegisterL(uint8_t ai_value);
 
     // Accesseur registre AF
     std::uint16_t getRegisterAF() const;
+    void setRegisterAF(uint16_t ai_value);
 
     // Accesseur registre BC
     std::uint16_t getRegisterBC() const;
+    void setRegisterBC(uint16_t ai_value);
 
     // Accesseur registre DE
     std::uint16_t getRegisterDE() const;
+    void setRegisterDE(uint16_t ai_value);
 
     // Accesseur registre HL
     std::uint16_t getRegisterHL() const;
+    void setRegisterHL(uint16_t ai_value);
 
     // Accesseur flag Z
-    std::uint8_t getFlagZ() const;
+    bool getFlagZ() const;
+    void setFlagZ(bool ai_value);
 
     // Accesseur flag N
-    std::uint8_t getFlagN() const;
+    bool getFlagN() const;
+    void setFlagN(bool ai_value);
 
     // Accesseur flag H
-    std::uint8_t getFlagH() const;
+    bool getFlagH() const;
+    void setFlagH(bool ai_value);
 
     // Accesseur flag C
-    std::uint8_t getFlagC() const;
+    bool getFlagC() const;
+    void setFlagC(bool ai_value);
 
     // Accesseur flag RES
-    std::uint8_t getFlagRES() const;
+    bool getFlagRES() const;
+    void setFlagRES(bool ai_value);
 
     // Accesseur registre PC
     std::uint16_t getRegisterPC() const;
+    void setRegisterPC(uint16_t ai_value);
 
     // Accesseur registre SP
     std::uint16_t getRegisterSP() const;
+    void setRegisterSP(uint16_t ai_value);
 
     // Accesseur structure registres
     tu_registers getRegisters() const;
@@ -162,7 +181,7 @@ private:
     // Récupération d'un registre 8/16 bits en fonction de son masque
     // 0 1 2 3 4 5    6 7
     // B C D E H L (HL) A
-    void                _decodeRegister8Bits(std::uint8_t ai_registerMask, std::string &ai_sReg, std::uint8_t* &aop_register8bits, std::uint16_t* &aop_register16bits);
+    void                _decodeRegister8Bits(std::uint8_t ai_registerMask, std::string &ao_sReg, std::uint8_t* &aop_register8bits, std::uint16_t* &aop_register16bits);
 
     // Récupération d'un registre 16 bits en fonction de son masque et l'opcode courant
     //  0  1  2     3

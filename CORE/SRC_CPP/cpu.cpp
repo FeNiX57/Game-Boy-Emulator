@@ -7,10 +7,10 @@
 // ********************************************************
 
 // Constructeur
-Cpu::Cpu(Mpu* ai_mpu)
+Cpu::Cpu(Mpu* aip_mpu)
 {
     // Récupération du pointeur vers la mémoire
-    mp_mpu = ai_mpu;
+    mp_mpu = aip_mpu;
 
     // Initialisation des registres
     initRegisters();
@@ -34,10 +34,20 @@ std::uint8_t Cpu::getRegisterA() const
     return m_registers.s8bits.a;
 }
 
+void Cpu::setRegisterA(uint8_t ai_value)
+{
+    m_registers.s8bits.a = ai_value;
+}
+
 // Accesseur registre B
 std::uint8_t Cpu::getRegisterB() const
 {
     return m_registers.s8bits.b;
+}
+
+void Cpu::setRegisterB(uint8_t ai_value)
+{
+    m_registers.s8bits.b = ai_value;
 }
 
 // Accesseur registre C
@@ -46,10 +56,20 @@ std::uint8_t Cpu::getRegisterC() const
     return m_registers.s8bits.c;
 }
 
+void Cpu::setRegisterC(uint8_t ai_value)
+{
+    m_registers.s8bits.c = ai_value;
+}
+
 // Accesseur registre D
 std::uint8_t Cpu::getRegisterD() const
 {
     return m_registers.s8bits.d;
+}
+
+void Cpu::setRegisterD(uint8_t ai_value)
+{
+    m_registers.s8bits.d = ai_value;
 }
 
 // Accesseur registre E
@@ -58,10 +78,20 @@ std::uint8_t Cpu::getRegisterE() const
     return m_registers.s8bits.e;
 }
 
+void Cpu::setRegisterE(uint8_t ai_value)
+{
+    m_registers.s8bits.e = ai_value;
+}
+
 // Accesseur registre F
 std::uint8_t Cpu::getRegisterF() const
 {
     return m_registers.s8bits.f;
+}
+
+void Cpu::setRegisterF(uint8_t ai_value)
+{
+    m_registers.s8bits.f = ai_value;
 }
 
 // Accesseur registre H
@@ -70,10 +100,20 @@ std::uint8_t Cpu::getRegisterH() const
     return m_registers.s8bits.h;
 }
 
+void Cpu::setRegisterH(uint8_t ai_value)
+{
+    m_registers.s8bits.h = ai_value;
+}
+
 // Accesseur registre L
 std::uint8_t Cpu::getRegisterL() const
 {
     return m_registers.s8bits.l;
+}
+
+void Cpu::setRegisterL(uint8_t ai_value)
+{
+    m_registers.s8bits.l = ai_value;
 }
 
 // Accesseur registre AF
@@ -82,10 +122,20 @@ std::uint16_t Cpu::getRegisterAF() const
     return m_registers.s16bits.af;
 }
 
+void Cpu::setRegisterAF(uint16_t ai_value)
+{
+    m_registers.s16bits.af = ai_value;
+}
+
 // Accesseur registre BC
 std::uint16_t Cpu::getRegisterBC() const
 {
     return m_registers.s16bits.bc;
+}
+
+void Cpu::setRegisterBC(uint16_t ai_value)
+{
+    m_registers.s16bits.bc = ai_value;
 }
 
 // Accesseur registre DE
@@ -94,40 +144,75 @@ std::uint16_t Cpu::getRegisterDE() const
     return m_registers.s16bits.de;
 }
 
+void Cpu::setRegisterDE(uint16_t ai_value)
+{
+    m_registers.s16bits.de = ai_value;
+}
+
 // Accesseur registre HL
 std::uint16_t Cpu::getRegisterHL() const
 {
     return m_registers.s16bits.hl;
 }
 
-// Accesseur flag Z
-std::uint8_t Cpu::getFlagZ() const
+void Cpu::setRegisterHL(uint16_t ai_value)
 {
-    return m_registers.sFlags.z;
+    m_registers.s16bits.hl = ai_value;
+}
+
+// Accesseur flag Z
+bool Cpu::getFlagZ() const
+{
+    return (m_registers.sFlags.z == 1);
+}
+
+void Cpu::setFlagZ(bool ai_value)
+{
+    m_registers.sFlags.z = (ai_value)?1:0;
 }
 
 // Accesseur flag N
-std::uint8_t Cpu::getFlagN() const
+bool Cpu::getFlagN() const
 {
-    return m_registers.sFlags.n;
+    return (m_registers.sFlags.n==1);
+}
+
+void Cpu::setFlagN(bool ai_value)
+{
+    m_registers.sFlags.n = (ai_value)?1:0;
 }
 
 // Accesseur flag H
-std::uint8_t Cpu::getFlagH() const
+bool Cpu::getFlagH() const
 {
-    return m_registers.sFlags.h;
+    return (m_registers.sFlags.h==1);
+}
+
+void Cpu::setFlagH(bool ai_value)
+{
+    m_registers.sFlags.h = (ai_value)?1:0;
 }
 
 // Accesseur flag C
-std::uint8_t Cpu::getFlagC() const
+bool Cpu::getFlagC() const
 {
-    return m_registers.sFlags.c;
+    return (m_registers.sFlags.c==1);
+}
+
+void Cpu::setFlagC(bool ai_value)
+{
+    m_registers.sFlags.c = (ai_value)?1:0;
 }
 
 // Accesseur flag RES
-std::uint8_t Cpu::getFlagRES() const
+bool Cpu::getFlagRES() const
 {
-    return m_registers.sFlags.res;
+    return (m_registers.sFlags.res==1);
+}
+
+void Cpu::setFlagRES(bool ai_value)
+{
+    m_registers.sFlags.res = (ai_value)?1:0;
 }
 
 // Accesseur registre PC
@@ -136,10 +221,20 @@ std::uint16_t Cpu::getRegisterPC() const
     return m_pc;
 }
 
+void Cpu::setRegisterPC(uint16_t ai_value)
+{
+    m_pc = ai_value;
+}
+
 // Accesseur registre SP
 std::uint16_t Cpu::getRegisterSP() const
 {
     return m_sp;
+}
+
+void Cpu::setRegisterSP(uint16_t ai_value)
+{
+    m_sp = ai_value;
 }
 
 // Accesseur structure registres
@@ -1023,48 +1118,48 @@ std::string Cpu::__decodeDec(uint8_t ai_id, uint16_t ai_idx, bool ai_exec) {
 }
 
 
-void Cpu::_decodeRegister8Bits(std::uint8_t ai_registerMask, std::string &ai_sReg, std::uint8_t* &aop_register8bits, std::uint16_t* &aop_register16bits)
+void Cpu::_decodeRegister8Bits(std::uint8_t ai_registerMask, std::string &ao_sReg, std::uint8_t* &aop_register8bits, std::uint16_t* &aop_register16bits)
 {
     switch (ai_registerMask)
     {
         case 0:
             aop_register8bits = &m_registers.s8bits.b;
-            ai_sReg = "B";
+            ao_sReg = "B";
             break;
 
         case 1:
             aop_register8bits = &m_registers.s8bits.c;
-            ai_sReg = "C";
+            ao_sReg = "C";
             break;
 
         case 2:
             aop_register8bits = &m_registers.s8bits.d;
-            ai_sReg = "D";
+            ao_sReg = "D";
             break;
 
         case 3:
             aop_register8bits = &m_registers.s8bits.e;
-            ai_sReg = "E";
+            ao_sReg = "E";
             break;
 
         case 4:
             aop_register8bits = &m_registers.s8bits.h;
-            ai_sReg = "H";
+            ao_sReg = "H";
             break;
 
         case 5:
             aop_register8bits = &m_registers.s8bits.l;
-            ai_sReg = "L";
+            ao_sReg = "L";
             break;
 
         case 6:
             aop_register16bits = &m_registers.s16bits.hl;
-            ai_sReg = "(HL)";
+            ao_sReg = "(HL)";
             break;
 
         case 7:
             aop_register8bits = &m_registers.s8bits.a;
-            ai_sReg = "A";
+            ao_sReg = "A";
             break;
 
         default:
