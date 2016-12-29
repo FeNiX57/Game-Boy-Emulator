@@ -4,6 +4,9 @@
 #include "CORE/INCLUDE/mpu.h"
 #include "CORE/INCLUDE/OPCODE/opcode_intf.h"
 #include "CORE/INCLUDE/OPCODE/opcode_nop.h"
+#include "CORE/INCLUDE/OPCODE/opcode_jp_nn.h"
+#include "CORE/INCLUDE/OPCODE/opcode_jp_hl.h"
+#include "CORE/INCLUDE/OPCODE/opcode_jp_cc_nn.h"
 
 
 // ********************************************************
@@ -26,6 +29,10 @@ Cpu::Cpu(Mpu* aip_mpu)
 // Destructeur
 Cpu::~Cpu()
 {
+    for(std::vector<OpCode_Intf*>::iterator w_it = mp_opcodes.begin(); w_it != mp_opcodes.end(); ++w_it) {
+        delete *w_it;
+    }
+    mp_opcodes.clear();
 }
 
 // ********************************************************
@@ -272,6 +279,9 @@ void Cpu::initRegisters()
 void Cpu::initOpcodesDesc()
 {
     mp_opcodes.push_back(new OpCode_Nop(*this, *mp_mpu));
+    mp_opcodes.push_back(new OpCode_Jp_nn(*this, *mp_mpu));
+    mp_opcodes.push_back(new OpCode_Jp_hl(*this, *mp_mpu));
+    mp_opcodes.push_back(new OpCode_Jp_cc_nn(*this, *mp_mpu));
     // Initialisation des masques et identifiants des opcodes 8 bits
     m_opcodesDesc.masque8bits[1]  = 0xFF; m_opcodesDesc.id8bits[1]  = 0x08; m_opcodesDesc.instr8bits[1] = "LN";    	// LN (N),SP
     m_opcodesDesc.masque8bits[2]  = 0xCF; m_opcodesDesc.id8bits[2]  = 0x01; m_opcodesDesc.instr8bits[2] = "LD";     // LD R,N
@@ -306,8 +316,6 @@ void Cpu::initOpcodesDesc()
     m_opcodesDesc.masque8bits[31] = 0xE7; m_opcodesDesc.id8bits[31] = 0xC0; m_opcodesDesc.instr8bits[31] = "RET";    // RET F
     m_opcodesDesc.masque8bits[32] = 0xFF; m_opcodesDesc.id8bits[32] = 0xC9; m_opcodesDesc.instr8bits[32] = "RET";    // RET
     m_opcodesDesc.masque8bits[33] = 0xFF; m_opcodesDesc.id8bits[33] = 0xD9; m_opcodesDesc.instr8bits[33] = "RETI";   // RETI
-    m_opcodesDesc.masque8bits[34] = 0xE7; m_opcodesDesc.id8bits[34] = 0xC2; m_opcodesDesc.instr8bits[34] = "JP";     // JP F,N
-    m_opcodesDesc.masque8bits[35] = 0xFF; m_opcodesDesc.id8bits[35] = 0xC3; m_opcodesDesc.instr8bits[35] = "JP";     // JP N
     m_opcodesDesc.masque8bits[36] = 0xE7; m_opcodesDesc.id8bits[36] = 0xC4; m_opcodesDesc.instr8bits[36] = "CALL";   // CALL F,N
     m_opcodesDesc.masque8bits[37] = 0xFF; m_opcodesDesc.id8bits[37] = 0xCD; m_opcodesDesc.instr8bits[37] = "CALL";   // CALL N
     m_opcodesDesc.masque8bits[38] = 0xFF; m_opcodesDesc.id8bits[38] = 0xE8; m_opcodesDesc.instr8bits[38] = "ADD";    // ADD SP,N
@@ -318,7 +326,6 @@ void Cpu::initOpcodesDesc()
     m_opcodesDesc.masque8bits[43] = 0xFF; m_opcodesDesc.id8bits[43] = 0xF2; m_opcodesDesc.instr8bits[43] = "LD";     // LD A,(C)
     m_opcodesDesc.masque8bits[44] = 0xFF; m_opcodesDesc.id8bits[44] = 0xEA; m_opcodesDesc.instr8bits[44] = "LD";     // LD (N),A
     m_opcodesDesc.masque8bits[45] = 0xFF; m_opcodesDesc.id8bits[45] = 0xFA; m_opcodesDesc.instr8bits[45] = "LD";     // LD A,(N)
-    m_opcodesDesc.masque8bits[46] = 0xFF; m_opcodesDesc.id8bits[46] = 0xE9; m_opcodesDesc.instr8bits[46] = "JP";     // JP HL
     m_opcodesDesc.masque8bits[47] = 0xFF; m_opcodesDesc.id8bits[47] = 0xF9; m_opcodesDesc.instr8bits[47] = "LD";     // LD SP,HL
     m_opcodesDesc.masque8bits[48] = 0xFF; m_opcodesDesc.id8bits[48] = 0xF3; m_opcodesDesc.instr8bits[48] = "DI";     // DI
     m_opcodesDesc.masque8bits[49] = 0xFF; m_opcodesDesc.id8bits[49] = 0xFB; m_opcodesDesc.instr8bits[49] = "EI";     // EI
