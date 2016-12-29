@@ -9,11 +9,11 @@ public:
     OpCode_Jp_nn(Cpu &ai_cpu, Mpu &ai_mpu);
 
     virtual inline uint8_t getId() const {
-        return 0xC3;
+        return 0xC3u;
     }
 
     virtual inline uint8_t getMask() const {
-        return 0xFF;
+        return 0xFFu;
     }
 
     virtual void execute(uint16_t ai_memOffset);

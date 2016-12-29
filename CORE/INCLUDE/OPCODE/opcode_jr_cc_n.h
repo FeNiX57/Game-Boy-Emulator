@@ -1,23 +1,24 @@
-#ifndef OPCODE_JP_CC_NN_H
-#define OPCODE_JP_CC_NN_H
+#ifndef OPCODE_JR_CC_N_H
+#define OPCODE_JR_CC_N_H
 
 #include "opcode_base.h"
 
-class OpCode_Jp_cc_nn : public OpCode_Base
+class OpCode_Jr_cc_n : public OpCode_Base
 {
 public:
-    OpCode_Jp_cc_nn(Cpu &ai_cpu, Mpu &ai_mpu);
+    OpCode_Jr_cc_n(Cpu& ai_cpu, Mpu& ai_mpu);
 
     virtual inline uint8_t getId() const {
-        return 0xE7u;
+        return 0x20u;
     }
 
     virtual inline uint8_t getMask() const {
-        return 0xC2u;
+        return 0xE7;
     }
 
     virtual void execute(uint16_t ai_memOffset);
+
     virtual std::string getInstruction(uint16_t ai_memOffset) const;
 };
 
-#endif // OPCODE_JP_CC_NN_H
+#endif // OPCODE_JR_CC_N_H
