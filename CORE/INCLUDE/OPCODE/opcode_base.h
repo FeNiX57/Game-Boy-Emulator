@@ -18,6 +18,9 @@ protected:
     void _decodeAndSetRegister16Bits(uint8_t ai_register, uint16_t ai_value);
     std::string _decodeAndGetNameRegister16Bits(uint8_t ai_register) const;
 
+    bool _decodeAndTestCondition(uint16_t ai_memOffset) const;
+    std::string _decodeAndGetNameCondition(uint16_t ai_memOffset) const;
+
 protected:
     Cpu& m_cpu;
     Mpu& m_mpu;

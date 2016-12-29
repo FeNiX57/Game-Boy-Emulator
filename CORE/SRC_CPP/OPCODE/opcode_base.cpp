@@ -170,3 +170,59 @@ std::string OpCode_Base::_decodeAndGetNameRegister16Bits(uint8_t ai_register) co
     }
     return w_res;
 }
+
+bool OpCode_Base::_decodeAndTestCondition(uint16_t ai_memOffset) const
+{
+    uint8_t w_mnemo = (m_mpu.getMemVal(ai_memOffset) & 0x18) >> 3u;
+    bool w_test = true;
+    switch (w_mnemo) {
+    case 0:
+        w_test = (m_cpu.getFlagZ() == 0u);
+        break;
+
+    case 1:
+        w_test = (m_cpu.getFlagZ() == 1u);
+        break;
+
+    case 2:
+        w_test = (m_cpu.getFlagC() == 0u);
+        break;
+
+    case 3:
+        w_test = (m_cpu.getFlagC() == 1u);
+        break;
+
+    default:
+        std::cerr << "Impossible w_mnemo: " << w_mnemo << std::endl;
+        w_test = false;
+    }
+    return w_test;
+}
+
+std::string OpCode_Base::_decodeAndGetNameCondition(uint16_t ai_memOffset) const
+{
+    std::string w_str;
+    uint8_t w_mnemo = (m_mpu.getMemVal(ai_memOffset) & 0x18) >> 3u;
+    switch (w_mnemo) {
+    case 0:
+        w_str =  "NZ";
+        break;
+
+    case 1:
+        w_str = "Z";
+        break;
+
+    case 2:
+        w_str = "NC";
+        break;
+
+    case 3:
+        w_str = "C";
+        break;
+
+    default:
+        std::cerr << "Impossible w_mnemo: " << w_mnemo << std::endl;
+        w_str = "ERROR";
+    }
+    return w_str;
+}

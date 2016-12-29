@@ -7,7 +7,8 @@
 #include "CORE/INCLUDE/OPCODE/opcode_jp_nn.h"
 #include "CORE/INCLUDE/OPCODE/opcode_jp_hl.h"
 #include "CORE/INCLUDE/OPCODE/opcode_jp_cc_nn.h"
-
+#include "CORE/INCLUDE/OPCODE/opcode_jr_n.h"
+#include "CORE/INCLUDE/OPCODE/opcode_jr_cc_n.h"
 
 // ********************************************************
 // Constructeur / Destructeur
@@ -23,7 +24,16 @@ Cpu::Cpu(Mpu* aip_mpu)
     initRegisters();
 
     // Initialisation des masques et identifiants des opcodes
-    initOpcodesDesc();
+    try {
+        initOpcodesDesc();
+    }
+    catch (...) {
+        for(std::vector<OpCode_Intf*>::iterator w_it = mp_opcodes.begin(); w_it != mp_opcodes.end(); ++w_it) {
+            delete *w_it;
+        }
+        mp_opcodes.clear();
+        throw;
+    }
 }
 
 // Destructeur
@@ -282,6 +292,8 @@ void Cpu::initOpcodesDesc()
     mp_opcodes.push_back(new OpCode_Jp_nn(*this, *mp_mpu));
     mp_opcodes.push_back(new OpCode_Jp_hl(*this, *mp_mpu));
     mp_opcodes.push_back(new OpCode_Jp_cc_nn(*this, *mp_mpu));
+    mp_opcodes.push_back(new OpCode_Jr_n(*this, *mp_mpu));
+    mp_opcodes.push_back(new OpCode_Jr_cc_n(*this, *mp_mpu));
     // Initialisation des masques et identifiants des opcodes 8 bits
     m_opcodesDesc.masque8bits[1]  = 0xFF; m_opcodesDesc.id8bits[1]  = 0x08; m_opcodesDesc.instr8bits[1] = "LN";    	// LN (N),SP
     m_opcodesDesc.masque8bits[2]  = 0xCF; m_opcodesDesc.id8bits[2]  = 0x01; m_opcodesDesc.instr8bits[2] = "LD";     // LD R,N
@@ -296,8 +308,6 @@ void Cpu::initOpcodesDesc()
     m_opcodesDesc.masque8bits[11] = 0xF7; m_opcodesDesc.id8bits[11] = 0x07; m_opcodesDesc.instr8bits[11] = "RdCA";   // RdCA
     m_opcodesDesc.masque8bits[12] = 0xF7; m_opcodesDesc.id8bits[12] = 0x17; m_opcodesDesc.instr8bits[12] = "RdA";    // RdA
     m_opcodesDesc.masque8bits[13] = 0xFF; m_opcodesDesc.id8bits[13] = 0x10; m_opcodesDesc.instr8bits[13] = "STOP";   // STOP
-    m_opcodesDesc.masque8bits[14] = 0xFF; m_opcodesDesc.id8bits[14] = 0x18; m_opcodesDesc.instr8bits[14] = "JR";     // JR N
-    m_opcodesDesc.masque8bits[15] = 0xE7; m_opcodesDesc.id8bits[15] = 0x20; m_opcodesDesc.instr8bits[15] = "JR";     // JR F,N
     m_opcodesDesc.masque8bits[16] = 0xFF; m_opcodesDesc.id8bits[16] = 0x22; m_opcodesDesc.instr8bits[16] = "LDI";    // LDI (HL),A
     m_opcodesDesc.masque8bits[17] = 0xFF; m_opcodesDesc.id8bits[17] = 0x2A; m_opcodesDesc.instr8bits[17] = "LDI";    // LDI A,(HL)
     m_opcodesDesc.masque8bits[18] = 0xFF; m_opcodesDesc.id8bits[18] = 0x32; m_opcodesDesc.instr8bits[18] = "LDD";    // LDD (HL),A
