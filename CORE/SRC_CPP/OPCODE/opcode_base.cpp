@@ -33,7 +33,7 @@ uint8_t OpCode_Base::_decodeAndGetRegister8Bits(uint8_t ai_register) const
             return m_cpu.getRegisterA();
 
         default:
-            std::cout << "ERREUR : Registre 8 bits inconnu" << std::endl;
+            std::cerr << "PC (0x" << std::hex << m_cpu.getRegisterPC() << "): ERREUR : Registre 8 bits inconnu" << std::endl;
             return 0;
     }
 }
@@ -44,30 +44,38 @@ void OpCode_Base::_decodeAndSetRegister8Bits(uint8_t ai_register, uint8_t ai_val
     {
         case 0:
             m_cpu.setRegisterB(ai_value);
+            break;
 
         case 1:
             m_cpu.setRegisterC(ai_value);
+            break;
 
         case 2:
             m_cpu.setRegisterD(ai_value);
+            break;
 
         case 3:
             m_cpu.setRegisterE(ai_value);
+            break;
 
         case 4:
             m_cpu.setRegisterH(ai_value);
+            break;
 
         case 5:
             m_cpu.setRegisterL(ai_value);
+            break;
 
         case 6:
-            return m_mpu.setMemVal(m_cpu.getRegisterHL(), ai_value);
+            m_mpu.setMemVal(m_cpu.getRegisterHL(), ai_value);
+            break;
 
         case 7:
             m_cpu.setRegisterA(ai_value);
+            break;
 
         default:
-            std::cout << "ERREUR : Registre 8 bits inconnu" << std::endl;
+            std::cerr << "PC (0x" << std::hex << m_cpu.getRegisterPC() << "): ERREUR : Registre 8 bits inconnu" << std::endl;
     }
 }
 
@@ -78,38 +86,47 @@ std::string OpCode_Base::_decodeAndGetNameRegister8Bits(uint8_t ai_register) con
     {
         case 0:
             w_res = "B";
+        break;
 
         case 1:
             w_res = "C";
+            break;
 
         case 2:
             w_res = "D";
+            break;
 
         case 3:
             w_res = "E";
+            break;
 
         case 4:
             w_res = "H";
+            break;
 
         case 5:
             w_res = "L";
+            break;
 
         case 6:
             w_res = "(HL)";
+            break;
 
         case 7:
             w_res = "A";
+            break;
 
         default:
-            std::cout << "ERREUR : Registre 8 bits inconnu" << std::endl;
+            std::cerr << "PC (0x" << std::hex << m_cpu.getRegisterPC() << "): ERREUR : Registre 8 bits inconnu" << std::endl;
             w_res = "UNKNOWN";
     }
     return w_res;
 }
 
-uint16_t OpCode_Base::_decodeAndGetRegister16Bits(uint8_t ai_register) const
+uint16_t OpCode_Base::_decodeAndGetRegister16Bits(uint16_t ai_memOffset) const
 {
-    switch (ai_register) {
+    uint8_t w_register = (m_mpu.getMemVal(ai_memOffset) & 0x30u) >> 4u;
+    switch (w_register) {
         case 0:
             return m_cpu.getRegisterBC();
 
@@ -123,50 +140,60 @@ uint16_t OpCode_Base::_decodeAndGetRegister16Bits(uint8_t ai_register) const
             return m_cpu.getRegisterSP();
 
         default:
-            std::cout << "ERREUR : Registre 16 bits inconnu" << std::endl;
+            std::cerr << "PC (0x" << std::hex << m_cpu.getRegisterPC() << "): ERREUR : Registre 16 bits inconnu" << std::endl;
             return 0;
     }
 }
 
-void OpCode_Base::_decodeAndSetRegister16Bits(uint8_t ai_register, uint16_t ai_value)
+void OpCode_Base::_decodeAndSetRegister16Bits(uint16_t ai_memOffset, uint16_t ai_value)
 {
-    switch (ai_register) {
+    uint8_t w_register = (m_mpu.getMemVal(ai_memOffset) & 0x30u) >> 4u;
+    switch (w_register) {
         case 0:
             m_cpu.setRegisterBC(ai_value);
+            break;
 
         case 1:
             m_cpu.setRegisterDE(ai_value);
+            break;
 
         case 2:
             m_cpu.setRegisterHL(ai_value);
+            break;
 
         case 3:
             m_cpu.setRegisterSP(ai_value);
+            break;
 
         default:
-            std::cout << "ERREUR : Registre 16 bits inconnu" << std::endl;
+            std::cerr << "PC (0x" << std::hex << m_cpu.getRegisterPC() << "): ERREUR : Registre 16 bits inconnu" << std::endl;
     }
 }
 
-std::string OpCode_Base::_decodeAndGetNameRegister16Bits(uint8_t ai_register) const
+std::string OpCode_Base::_decodeAndGetNameRegister16Bits(uint16_t ai_memOffset) const
 {
+    uint8_t w_register = (m_mpu.getMemVal(ai_memOffset) & 0x30u) >> 4u;
     std::string w_res;
-    switch (ai_register) {
+    switch (w_register) {
         case 0:
             w_res = "BC";
+            break;
 
         case 1:
             w_res = "DE";
+            break;
 
         case 2:
             w_res = "HL";
+            break;
 
         case 3:
             w_res = "SP";
+            break;
 
         default:
-            std::cout << "ERREUR : Registre 16 bits inconnu" << std::endl;
-            w_res = "";
+            std::cerr << "PC (0x" << std::hex << m_cpu.getRegisterPC() << "): ERREUR : Registre 16 bits inconnu" << std::endl;
+            w_res = "ERROR";
     }
     return w_res;
 }
@@ -193,7 +220,7 @@ bool OpCode_Base::_decodeAndTestCondition(uint16_t ai_memOffset) const
         break;
 
     default:
-        std::cerr << "Impossible w_mnemo: " << w_mnemo << std::endl;
+        std::cerr << "PC (0x" << std::hex << m_cpu.getRegisterPC() << "): Impossible w_mnemo: " << w_mnemo << std::endl;
         w_test = false;
     }
     return w_test;
@@ -221,7 +248,7 @@ std::string OpCode_Base::_decodeAndGetNameCondition(uint16_t ai_memOffset) const
         break;
 
     default:
-        std::cerr << "Impossible w_mnemo: " << w_mnemo << std::endl;
+        std::cerr << "PC (0x" << std::hex << m_cpu.getRegisterPC() << "): Impossible w_mnemo: " << w_mnemo << std::endl;
         w_str = "ERROR";
     }
     return w_str;

@@ -9,6 +9,8 @@
 #include "CORE/INCLUDE/OPCODE/opcode_jp_cc_nn.h"
 #include "CORE/INCLUDE/OPCODE/opcode_jr_n.h"
 #include "CORE/INCLUDE/OPCODE/opcode_jr_cc_n.h"
+#include "CORE/INCLUDE/OPCODE/opcode_ld_nn_sp.h"
+#include "CORE/INCLUDE/OPCODE/opcode_ld_r_nn.h"
 
 // ********************************************************
 // Constructeur / Destructeur
@@ -294,9 +296,9 @@ void Cpu::initOpcodesDesc()
     mp_opcodes.push_back(new OpCode_Jp_cc_nn(*this, *mp_mpu));
     mp_opcodes.push_back(new OpCode_Jr_n(*this, *mp_mpu));
     mp_opcodes.push_back(new OpCode_Jr_cc_n(*this, *mp_mpu));
+    mp_opcodes.push_back(new OpCode_Ld_nn_sp(*this, *mp_mpu));
+    mp_opcodes.push_back(new OpCode_Ld_r_nn(*this, *mp_mpu));
     // Initialisation des masques et identifiants des opcodes 8 bits
-    m_opcodesDesc.masque8bits[1]  = 0xFF; m_opcodesDesc.id8bits[1]  = 0x08; m_opcodesDesc.instr8bits[1] = "LN";    	// LN (N),SP
-    m_opcodesDesc.masque8bits[2]  = 0xCF; m_opcodesDesc.id8bits[2]  = 0x01; m_opcodesDesc.instr8bits[2] = "LD";     // LD R,N
     m_opcodesDesc.masque8bits[3]  = 0xCF; m_opcodesDesc.id8bits[3]  = 0x09; m_opcodesDesc.instr8bits[3] = "ADD";    // ADD HL,R
     m_opcodesDesc.masque8bits[4]  = 0xEF; m_opcodesDesc.id8bits[4]  = 0x02; m_opcodesDesc.instr8bits[4] = "LD";     // LD (R),A
     m_opcodesDesc.masque8bits[5]  = 0xEF; m_opcodesDesc.id8bits[5]  = 0x0A; m_opcodesDesc.instr8bits[5] = "LD";     // LD A,(R)
@@ -364,7 +366,7 @@ OpCode_Intf *Cpu::decodeOpcode(uint8_t ai_opcode)
             return *w_it;
         }
     }
-    std::cerr << "Unknow OpCode: " << +ai_opcode << std::endl;
+    std::cerr << "PC (0x" << std::hex << m_pc << "): Unknow OpCode: 0x" << std::hex << +ai_opcode << std::endl;
     return nullptr;
 }
 
@@ -375,7 +377,7 @@ const OpCode_Intf *Cpu::decodeOpcode(uint8_t ai_opcode) const
             return *w_cit;
         }
     }
-    std::cerr << "Unknow OpCode: " << +ai_opcode << std::endl;
+    std::cerr << "PC (0x" << std::hex << m_pc << "): Unknow OpCode: 0x" << std::hex << +ai_opcode << std::endl;
     return nullptr;
 }
 
@@ -787,7 +789,7 @@ std::string			Cpu::__decodeLoad8bits(std::uint8_t ai_id, std::uint16_t ai_memOff
     }
     else
     {
-        std::cout << "ERREUR : Pointeur NULL" << std::endl;
+        std::cerr << "PC (0x" << std::hex << m_pc << "): ERREUR : Pointeur NULL" << std::endl;
         exit(-1);
     }
 
@@ -1186,7 +1188,7 @@ void Cpu::_decodeRegister8Bits(std::uint8_t ai_registerMask, std::string &ao_sRe
             break;
 
         default:
-            std::cout << "ERREUR : Registre 8 bits inconnu" << std::endl;
+            std::cerr << "PC (0x" << std::hex << m_pc << "): ERREUR : Registre 8 bits inconnu" << std::endl;
             break;
     }
 }
@@ -1227,7 +1229,7 @@ std::uint16_t* Cpu::_decodeRegister16Bits(std::uint8_t ai_registerMask, std::uin
         break;
 
     default:
-        std::cout << "ERREUR : Registre 16 bits inconnu" << std::endl;
+        std::cerr << "PC (0x" << std::hex << m_pc << "): ERREUR : Registre 16 bits inconnu" << std::endl;
         break;
     }
 

@@ -14,12 +14,16 @@ protected:
     void _decodeAndSetRegister8Bits(uint8_t ai_register, uint8_t ai_value);
     std::string _decodeAndGetNameRegister8Bits(uint8_t ai_register) const;
 
-    uint16_t _decodeAndGetRegister16Bits(uint8_t ai_register) const;
-    void _decodeAndSetRegister16Bits(uint8_t ai_register, uint16_t ai_value);
-    std::string _decodeAndGetNameRegister16Bits(uint8_t ai_register) const;
+    uint16_t _decodeAndGetRegister16Bits(uint16_t ai_memOffset) const;
+    void _decodeAndSetRegister16Bits(uint16_t ai_memOffset, uint16_t ai_value);
+    std::string _decodeAndGetNameRegister16Bits(uint16_t ai_memOffset) const;
 
     bool _decodeAndTestCondition(uint16_t ai_memOffset) const;
     std::string _decodeAndGetNameCondition(uint16_t ai_memOffset) const;
+
+    inline uint16_t _get16BitData(uint16_t ai_memOffset) const {
+        return (static_cast<uint16_t>(m_mpu.getMemVal(ai_memOffset+2)) << 8u) + static_cast<uint16_t>(m_mpu.getMemVal(ai_memOffset+1));
+    }
 
 protected:
     Cpu& m_cpu;
