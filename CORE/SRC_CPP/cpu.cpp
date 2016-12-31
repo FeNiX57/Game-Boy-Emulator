@@ -11,6 +11,8 @@
 #include "CORE/INCLUDE/OPCODE/opcode_jr_cc_n.h"
 #include "CORE/INCLUDE/OPCODE/opcode_ld_nn_sp.h"
 #include "CORE/INCLUDE/OPCODE/opcode_ld_r_nn.h"
+#include "CORE/INCLUDE/OPCODE/opcode_ld_r_a.h"
+#include "CORE/INCLUDE/OPCODE/opcode_ld_a_r.h"
 
 // ********************************************************
 // Constructeur / Destructeur
@@ -298,10 +300,10 @@ void Cpu::initOpcodesDesc()
     mp_opcodes.push_back(new OpCode_Jr_cc_n(*this, *mp_mpu));
     mp_opcodes.push_back(new OpCode_Ld_nn_sp(*this, *mp_mpu));
     mp_opcodes.push_back(new OpCode_Ld_r_nn(*this, *mp_mpu));
+    mp_opcodes.push_back(new OpCode_Ld_r_a(*this, *mp_mpu));
+    mp_opcodes.push_back(new OpCode_Ld_a_r(*this, *mp_mpu));
     // Initialisation des masques et identifiants des opcodes 8 bits
     m_opcodesDesc.masque8bits[3]  = 0xCF; m_opcodesDesc.id8bits[3]  = 0x09; m_opcodesDesc.instr8bits[3] = "ADD";    // ADD HL,R
-    m_opcodesDesc.masque8bits[4]  = 0xEF; m_opcodesDesc.id8bits[4]  = 0x02; m_opcodesDesc.instr8bits[4] = "LD";     // LD (R),A
-    m_opcodesDesc.masque8bits[5]  = 0xEF; m_opcodesDesc.id8bits[5]  = 0x0A; m_opcodesDesc.instr8bits[5] = "LD";     // LD A,(R)
     m_opcodesDesc.masque8bits[6]  = 0xCF; m_opcodesDesc.id8bits[6]  = 0x03; m_opcodesDesc.instr8bits[6] = "INC";    // INC R
     m_opcodesDesc.masque8bits[7]  = 0xCF; m_opcodesDesc.id8bits[7]  = 0x0B; m_opcodesDesc.instr8bits[7] = "DEC";    // DEC R
     m_opcodesDesc.masque8bits[8]  = 0xC7; m_opcodesDesc.id8bits[8]  = 0x04; m_opcodesDesc.instr8bits[8] = "INC";    // INC D
